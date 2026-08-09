@@ -355,6 +355,7 @@ load(); render();
 <button class="cfab" id="cfab" type="button">&#9729;&#65039;</button>
 
 
+<script>
 var CLOUD={API:'https://gitee.com/api/v5/repos/',FN:'daily6_backup.json',KEY:'daily6_cloud_v1',autoTimer:null,_fab:false};
 function ccfg(){try{return JSON.parse(localStorage.getItem(CLOUD.KEY)||'{}')}catch{return{}}}
 function cscfg(o){localStorage.setItem(CLOUD.KEY,JSON.stringify(o));}
@@ -383,5 +384,6 @@ save=function(){_origS.apply(this,arguments);var d=ccfg();if(d.auto&&d.tok&&d.re
 // auto-load on open
 window.addEventListener('load',function(){setTimeout(function(){var d=ccfg();if(d.tok&&d.repo){cdn();}},1500);});
 
+
+</script>
 </body>
-</html>
