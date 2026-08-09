@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>每日六件事</title>
+<style>
+  :root{--bg:#0f1419;--card:#1a2332;--border:#2a3a4f;--text:#e8edf2;--muted:#8899aa;--accent:#4fd1c5;--done:#48bb78;--miss:#fc8181;--gold:#ecc94b;--font:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;padding-bottom:40px}
+
+  .header{background:linear-gradient(135deg,#0f2a2a 0%,#1a2332 100%);border-bottom:1px solid var(--border);padding:18px 16px 14px;position:sticky;top:0;z-index:10}
+  .htop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  h1{font-size:19px;font-weight:700;color:var(--accent)}
+  .hdate{font-size:12px;color:var(--muted);margin-top:3px}
+  .hbtns{display:flex;gap:6px;align-items:center}
+  .hbtn{background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:13px;padding:5px 12px;border-radius:20px;cursor:pointer;font-family:var(--font);transition:.2s}
+  .hbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .chips{display:flex;gap:5px;flex-wrap:wrap}
+  .chip{font-size:12px;padding:3px 9px;border-radius:20px;background:#1a2a3a;border:1px solid var(--border);color:var(--muted);transition:.3s}
+  .chip.done{background:#1a3a2a;border-color:var(--done);color:var(--done)}
+  .chip.miss{background:#3a1a1a;border-color:var(--miss);color:var(--miss)}
+
+  .content{padding:14px 16px;max-width:480px;margin:0 auto}
+  .datenav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .nb{background:var(--card);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:.2s;font-family:var(--font)}
+  .nb:hover{border-color:var(--accent);color:var(--accent)}
+  .nc{text-align:center}
+  .nd{font-size:15px;font-weight:600}
+  .nt{font-size:12px;color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-color:transparent;transition:.2s}
+  .nt:hover{text-decoration-color:var(--accent)}
+
+  .modules{display:flex;flex-direction:column;gap:10px}
+  .mcard{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden;transition:border-color .3s}
+  .mcard.done{border-color:#2a4a3a}
+  .mcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;background:var(--border)}
+  .mcard.wakeup::before{background:#38bdf8}.mcard.sleep::before{background:#818cf8}
+  .mcard.exercise::before{background:#4fd1c5}.mcard.learn::before{background:#9f7aea}
+  .mcard.work::before{background:#ed8936}.mcard.rest::before{background:#ecc94b}
+
+  .mhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .micon{font-size:20px;line-height:1}
+  .mtitle{font-size:15px;font-weight:600;flex:1}
+  .mstreak{font-size:12px;color:var(--muted)}
+  .mstreak b{color:var(--gold)}
+
+  .ttrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .ttl{font-size:13px;color:var(--muted);width:52px;flex-shrink:0}
+  .tti{background:#111922;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:6px 10px;font-family:var(--font);width:90px;text-align:center;transition:border-color .2s}
+  .tti:focus{outline:none;border-color:var(--accent)}
+  .tti:read-only{opacity:.5}
+  .ttu{font-size:13px;color:var(--muted)}
+  .ttt{font-size:12px;color:var(--muted);margin-left:auto}
+  .ttt.ok{color:var(--done)}.ttt.warn{color:var(--gold)}.ttt.err{color:var(--miss)}
+
+  .prog{background:#111922;border-radius:6px;height:5px;overflow:hidden;margin-bottom:8px}
+  .progb{height:100%;border-radius:6px;transition:width .4s;min-width:0}
+
+  .chkrow{display:flex;align-items:center;gap:10px}
+  .chkb{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .25s;color:transparent;flex-shrink:0;font-family:var(--font)}
+  .chkb.checked{background:var(--done);border-color:var(--done);color:#fff}
+  .chkl{font-size:14px;cursor:pointer;user-select:none}
+
+  .mnote{width:100%;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:var(--font);padding:8px 10px;resize:none;min-height:52px;transition:border-color .2s;line-height:1.5;margin-top:6px}
+  .mnote:focus{outline:none;border-color:var(--accent)}
+  .mnote::placeholder{color:#445566}
+  .mnote:read-only{opacity:.5;cursor:not-allowed}
+
+  .revsec{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-top:14px}
+  .revhead{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .revhead span:first-child{font-size:18px}
+  .rv{font-size:15px;font-weight:600}
+  .revta{width:100%;background:#111922;border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;font-family:var(--font);padding:12px;resize:vertical;min-height:100px;line-height:1.7;transition:border-color .2s}
+  .revta:focus{outline:none;border-color:var(--accent)}
+  .revta::placeholder{color:#445566}
+  .revta:read-only{opacity:.5;cursor:not-allowed}
+  .revchar{text-align:right;font-size:11px;color:var(--muted);margin-top:4px}
+
+  .mbg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+  .mbg.hidden{display:none}
+  .mbox{background:#1a2332;border:1px solid var(--border);border-radius:20px;padding:22px;width:100%;max-width:380px;max-height:82vh;overflow-y:auto}
+  .mtitle2{font-size:17px;font-weight:700;color:var(--accent);text-align:center;margin-bottom:16px}
+  .s2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sc{background:#111922;border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+  .sn{font-size:30px;font-weight:700;color:var(--accent);line-height:1}
+  .sl{font-size:12px;color:var(--muted);margin-top:4px}
+  .ss{font-size:11px;color:#556677;margin-top:2px}
+  .blist{margin-top:16px}
+  .bi{margin-bottom:12px}
+  .bh{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .bhl{color:var(--text)}.bhr{color:var(--muted)}
+  .bt{background:#111922;border-radius:6px;height:8px;overflow:hidden}
+  .bf{height:100%;border-radius:6px;transition:width .4s}
+  .mc{width:100%;background:var(--accent);color:#0f1419;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;font-family:var(--font)}
+
+  .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2332;border:1px solid var(--accent);color:var(--accent);padding:10px 20px;border-radius:30px;font-size:14px;z-index:200;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{border-color:var(--miss);color:var(--miss)}
+
+/* ---- cloud sync ---- */
+.cbtn{background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:13px;padding:5px 12px;border-radius:20px;cursor:pointer;font-family:var(--font);transition:.2s}
+.cbtn:hover{border-color:var(--accent);color:var(--accent)}
+.cbtn.b{background:var(--accent);color:#0f1419;border-color:var(--accent);font-weight:600}
+.cbtn.b:hover{opacity:.85}
+.cmodal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.cmodal.hidden{display:none}
+.cbox{background:#1a2332;border:1px solid var(--border);border-radius:20px;padding:22px;width:100%;max-width:360px}
+.cttl{font-size:17px;font-weight:700;color:var(--accent);text-align:center;margin-bottom:16px}
+.clab{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
+.cfield{margin-bottom:14px}
+.cinp{width:100%;background:#111922;border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:9px 12px;font-family:var(--font);transition:border-color .2s}
+.cinp:focus{outline:none;border-color:var(--accent)}
+.cstatus{font-size:13px;text-align:center;min-height:20px;margin:12px 0 8px;padding:8px;border-radius:8px}
+.cstatus.idle{color:var(--muted);background:transparent}
+.cstatus.ok{color:var(--done);background:#1a3a2a}
+.cstatus.err{color:var(--miss);background:#3a1a1a}
+.crow{display:flex;gap:8px;margin-top:10px}
+.crow button{flex:1}
+.ctgl{display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;font-size:13px;color:var(--muted)}
+.ctgl input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.cfab{position:fixed;bottom:22px;right:22px;width:46px;height:46px;border-radius:50%;background:var(--card);border:1px solid var(--accent);color:var(--accent);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:.2s}
+.cfab:hover{background:var(--accent);color:#0f1419}
+.clink{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+.clink a{color:var(--accent)}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="htop">
+    <div><h1>📋 每日六件事</h1><div class="hdate" id="todayLabel"></div></div>
+    <div class="hbtns">
+      <button class="hbtn" onclick="openStats()">📊 统计</button>
+      <button class="hbtn" onclick="exportJSON()">📤</button>
+    </div>
+  </div>
+  <div class="chips" id="chipStrip"></div>
+</div>
+
+<div class="content">
+  <div class="datenav">
+    <button class="nb" onclick="navigate(-1)">◀</button>
+    <div class="nc"><div class="nd" id="navDate"></div><div class="nt" onclick="goToday()">回到今天</div></div>
+    <button class="nb" onclick="navigate(1)">▶</button>
+  </div>
+  <div class="modules" id="modulesList"></div>
+  <div class="revsec">
+    <div class="revhead"><span>📝</span><span class="rv">每日复盘</span></div>
+    <textarea class="revta" id="reviewTa" placeholder="今天做了什么？哪里做得好？哪里可以改进？明天的重点是什么？" oninput="saveReview(this.value)"></textarea>
+    <div class="revchar" id="reviewChar">0 字</div>
+  </div>
+</div>
+
+<div class="mbg hidden" id="statsModal" onclick="if(event.target===this)closeStats()">
+  <div class="mbox" id="statsBox"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== MODULES =====
+const MODULES = [
+  { id:'wakeup',  name:'早起',    icon:'🌅', color:'#38bdf8',
+    timeKey:'timeVal', timeLabel:'起床时间', timeUnit:'',
+    minVal:630, barMax:700, mode:'clock', checkLabel:'6:30前起床' },
+  { id:'sleep',   name:'早睡',    icon:'🌙', color:'#818cf8',
+    timeKey:'timeVal', timeLabel:'睡觉时间', timeUnit:'',
+    minVal:0,   barMax:2400, mode:'sleep', checkLabel:'23:00前睡觉' },
+  { id:'exercise',name:'每日锻炼', icon:'🏃', color:'#4fd1c5',
+    timeKey:'minutes', timeLabel:'锻炼时长', timeUnit:'分钟',
+    minVal:30, barMax:60, mode:'dur', checkLabel:'30分钟以上' },
+  { id:'learn',   name:'每日学习', icon:'📖', color:'#9f7aea',
+    timeKey:'minutes', timeLabel:'学习时长', timeUnit:'小时',
+    minVal:120, barMax:240, mode:'dur', scale:60, checkLabel:'2小时以上' },
+  { id:'work',    name:'每日工作输出', icon:'🎬', color:'#ed8936',
+    timeKey:null, mode:'simple', checkLabel:'拍完口播' },
+  { id:'rest',    name:'每日留白', icon:'⏸', color:'#ecc94b',
+    timeKey:'minutes', timeLabel:'留白时长', timeUnit:'分钟',
+    minVal:15, barMax:30, mode:'dur', checkLabel:'15分钟以上' },
+];
+const STORE_KEY = 'daily6_v3';
+const today = () => new Date().toISOString().slice(0,10);
+let state = {}, viewDate = today(), toastTimer = null;
+
+function defaultState(){ return { records:{}, reviews:{} }; }
+function load(){ try{ let r=localStorage.getItem(STORE_KEY); state=r?JSON.parse(r):defaultState(); }catch{ state=defaultState(); } }
+function save(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(state)); }catch(e){ showToast('保存失败',true); } }
+function getRec(date,id){ if(!state.records[date]) state.records[date]={}; if(!state.records[date][id]) state.records[date][id]={done:false,timeVal:null,minutes:null,note:''}; return state.records[date][id]; }
+function getReview(date){ if(!state.reviews[date]) state.reviews[date]=''; return state.reviews[date]; }
+
+function streak(id){ let d=new Date();d.setHours(0,0,0,0);let n=0; for(let i=0;i<365;i++){ let ds=d.toISOString().slice(0,10); if(getRec(ds,id).done) n++; else if(i>0) break; d.setDate(d.getDate()-1); } return n; }
+function bestStreak(id){ let best=0,cur=0; Object.keys(state.records).sort().forEach(ds=>{ if(getRec(ds,id).done){cur++;if(cur>best)best=cur;}else cur=0; }); return best; }
+
+function fmtDate(ds){ let d=new Date(ds+'T12:00:00'); return d.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric',weekday:'short'}); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function timeToStr(v){ if(!v && v!==0) return ''; let h=Math.floor(v/60),m=v%60; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
+function strToTime(s){ if(!s) return null; let p=s.split(':'); if(p.length<2) return null; return parseInt(p[0])*60+parseInt(p[1]); }
+function showToast(msg,err=false){ let t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(err?' err':''); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.className='toast';},2500); }
+
+let isToday=false;
+function render(){
+  isToday = viewDate===today();
+  document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('zh-CN',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('chipStrip').innerHTML = MODULES.map(m=>{ let r=getRec(viewDate,m.id); return `<span class="chip ${r.done?'done':'miss'}">${m.icon} ${r.done?'✓':'○'}</span>`; }).join('');
+  document.getElementById('navDate').textContent = isToday?'今天':fmtDate(viewDate);
+
+  document.getElementById('modulesList').innerHTML = MODULES.map(m=>{
+    let r=getRec(viewDate,m.id);
+    let sk=streak(m.id), bk=bestStreak(m.id);
+    let cardCls='mcard '+m.id+(r.done?' done':'');
+    let dis = isToday?'':'readonly';
+
+    let timeHTML='';
+    if(m.mode==='clock'||m.mode==='sleep'){
+      let tv = r.timeVal!=null ? timeToStr(r.timeVal) : '';
+      let ok = r.timeVal!=null && (m.mode==='clock' ? r.timeVal<=m.minVal : r.timeVal<=m.minVal);
+      let tip = r.timeVal==null?'未填写':ok?'✓ 达标':'超过目标时间';
+      let tipCls = r.timeVal==null?'err':ok?'ok':'err';
+      timeHTML=`<div class="ttrow">
+        <span class="ttl">${m.timeLabel}</span>
+        <input type="time" class="tti" id="ti_${m.id}" value="${tv}" ${dis} onchange="onTimeChange('${m.id}',this.value)">
+        <span class="ttt ${tipCls}">${tip}</span>
+      </div>`;
+    } else if(m.mode==='dur'){
+      let v = r.minutes||'';
+      let real = (parseInt(v)||0)*(m.scale||1);
+      let pct = m.barMax ? Math.min(100,(real/m.barMax)*100) : 0;
+      let barColor = real>=m.minVal?'var(--done)':'var(--gold)';
+      let tip = real>=m.minVal?'✓ 达标':real>0?'还差'+(m.minVal-real)+m.timeUnit:'未填写';
+      let tipCls = real>=m.minVal?'ok':real>0?'warn':'err';
+      timeHTML=`<div class="ttrow">
+        <span class="ttl">${m.timeLabel}</span>
+        <input type="number" class="tti" id="ti_${m.id}" min="0" placeholder="0" value="${v}" ${dis} oninput="onDurInput('${m.id}',this.value,${m.minVal},${m.scale||1})">
+        <span class="ttu">${m.timeUnit}</span>
+        <span class="ttt ${tipCls}">${tip}</span>
+      </div>
+      ${m.barMax?`<div class="prog"><div class="progb" id="pb_${m.id}" style="width:${pct}%;background:${barColor}"></div></div>`:''}`;
+    }
+
+    return `<div class="${cardCls}">
+  <div class="mhead"><span class="micon">${m.icon}</span><span class="mtitle">${m.name}</span><span class="mstreak">🔥 <b>${sk}</b>天 / 最高<b>${bk}</b>天</span></div>
+  ${timeHTML}
+  <div class="chkrow">
+    <button class="chkb${r.done?' checked':''}" id="cb_${m.id}" onclick="toggleMod('${m.id}')">${r.done?'✓':''}</button>
+    <span class="chkl" onclick="toggleMod('${m.id}')">${r.done?'已完成':'标记完成'}</span>
+  </div>
+  <textarea class="mnote" id="mn_${m.id}" placeholder="记录内容、心得……（选填）" ${dis} oninput="saveNote('${m.id}',this.value)">${esc(r.note||'')}</textarea>
+</div>`;
+  }).join('');
+
+  let rv=getReview(viewDate);
+  let ta=document.getElementById('reviewTa');
+  ta.value=rv; ta.readOnly=!isToday;
+  document.getElementById('reviewChar').textContent=rv.length+' 字';
+}
+
+function onTimeChange(id,val){
+  let r=getRec(viewDate,id);
+  r.timeVal=strToTime(val);
+  let m=MODULES.find(x=>x.id===id);
+  if(r.timeVal!=null){
+    let ok = m.mode==='clock' ? r.timeVal<=m.minVal : r.timeVal<=m.minVal;
+    let tip=document.querySelector('#ti_'+id+' + .ttt');
+    if(tip){ tip.textContent=ok?'✓ 达标':'超过目标时间'; tip.className='ttt '+(ok?'ok':'err'); }
+    if(ok && !r.done){ r.done=true; save(); render(); showToast('✓ '+m.name+'达标，自动打卡！'); return; }
+    if(!ok && r.done){ r.done=false; }
+  }
+  save();
+}
+function onDurInput(id,raw,minVal,scale){
+  let val=parseInt(raw)||0; if(val<0)val=0;
+  let r=getRec(viewDate,id);
+  let m=MODULES.find(x=>x.id===id);
+  r.minutes=val;
+  let real=val*scale;
+  let pb=document.getElementById('pb_'+id);
+  let tip=document.querySelector('#ti_'+id+' + .ttu + .ttt');
+  if(pb&&m.barMax){ pb.style.width=Math.min(100,(real/m.barMax)*100)+'%'; pb.style.background=real>=minVal?'var(--done)':'var(--gold)'; }
+  if(tip){ tip.textContent=real>=minVal?'✓ 达标':real>0?'还差'+(minVal-real)+m.timeUnit:'未填写'; tip.className='ttt '+(real>=minVal?'ok':real>0?'warn':'err'); }
+  if(real>=minVal && !r.done){ r.done=true; save(); render(); showToast('✓ '+m.name+'达标，自动打卡！'); return; }
+  if(real<minVal && r.done){ r.done=false; }
+  save();
+}
+
+function toggleMod(id){
+  if(!isToday){ showToast('只能打卡今天',true); return; }
+  let r=getRec(viewDate,id);
+  let m=MODULES.find(x=>x.id===id);
+  if(!r.done && m.mode==='clock' && (r.timeVal==null||r.timeVal>m.minVal)){ showToast('起床需在6:30前',true); return; }
+  if(!r.done && m.mode==='sleep' && (r.timeVal==null||r.timeVal>m.minVal)){ showToast('睡觉需在23:00前',true); return; }
+  if(!r.done && m.mode==='dur'){ let real=(parseInt(r.minutes)||0)*(m.scale||1); if(real<m.minVal){ showToast(m.name+'需满'+m.minVal+'分钟',true); return; } }
+  r.done=!r.done;
+  save(); render();
+  if(r.done) showToast('✓ 完成！');
+}
+function saveNote(id,val){ getRec(viewDate,id).note=val; save(); }
+function saveReview(val){ state.reviews[viewDate]=val; save(); document.getElementById('reviewChar').textContent=val.length+' 字'; }
+function navigate(d){ let dd=new Date(viewDate); dd.setDate(dd.getDate()+d); viewDate=dd.toISOString().slice(0,10); render(); }
+function goToday(){ viewDate=today(); render(); }
+
+// ===== STATS =====
+function openStats(){ document.getElementById('statsModal').classList.remove('hidden'); renderStats(); }
+function closeStats(){ document.getElementById('statsModal').classList.add('hidden'); }
+function renderStats(){
+  let ts=today(), d=new Date(ts), dom=d.getDate();
+  let md={}, mt={}; MODULES.forEach(m=>{md[m.id]=0;mt[m.id]=0;});
+  for(let i=1;i<=dom;i++){ let ds=ts.slice(0,8)+String(i).padStart(2,'0'); MODULES.forEach(m=>{mt[m.id]++;if(getRec(ds,m.id).done)md[m.id]++;}); }
+  let td=0,ta=0; MODULES.forEach(m=>{td+=md[m.id];ta+=mt[m.id];});
+  let pct=ta>0?Math.round(td/ta*100):0;
+  let best=0; MODULES.forEach(m=>{let b=bestStreak(m.id);if(b>best)best=b;});
+  let html=`<div class="mtitle2">📊 本月统计</div>
+  <div class="s2">
+    <div class="sc"><div class="sn">${pct}%</div><div class="sl">本月完成率</div><div class="ss">${td}/${ta} 项</div></div>
+    <div class="sc"><div class="sn">${best}</div><div class="sl">最高连续天数</div><div class="ss">所有模块</div></div>
+  </div>
+  <div class="blist">${MODULES.map(m=>{ let pct2=mt[m.id]>0?Math.round(md[m.id]/mt[m.id]*100):0; return `<div class="bi"><div class="bh"><span class="bhl">${m.icon} ${m.name}</span><span class="bhr">${pct2}%（${md[m.id]}/${mt[m.id]}天）</span></div><div class="bt"><div class="bf" style="width:${pct2}%;background:${m.color}"></div></div></div>`; }).join('')}</div>
+  <button class="mc" onclick="closeStats()">关闭</button>`;
+  document.getElementById('statsBox').innerHTML=html;
+}
+
+function exportJSON(){
+  try{ let b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); let u=URL.createObjectURL(b); let a=document.createElement('a'); a.href=u; a.download='daily6-'+today()+'.json'; document.body.appendChild(a); a.click(); setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(u);},1000); showToast('✅ 已导出'); }catch(e){ showToast('导出失败',true); }
+}
+
+load(); render();
+</script>
+
+<div class="cmodal hidden" id="cmodal" onclick="if(event.target===document.getElementById('cmodal'))cclose()">
+  <div class="cbox" style="max-width:360px">
+    <div class="cttl">&#9729;&#65039; 云同步设置</div>
+    <div class="cfield">
+      <label class="clab">Gitee 私人令牌</label>
+      <input type="password" class="cinp" id="ctok" placeholder="粘贴 Gitee access_token">
+    </div>
+    <div class="cfield">
+      <label class="clab">仓库（用户名/仓库名）</label>
+      <input type="text" class="cinp" id="crepo" placeholder="例如 yan-qun1111/yanqun-data">
+    </div>
+    <label class="ctgl">
+      <input type="checkbox" id="cauto"> 保存后自动同步
+    </label>
+    <div class="crow">
+      <button class="cbtn b" id="cupl">&#128229; 上传</button>
+      <button class="cbtn" id="cdn">&#128230; 下载</button>
+    </div>
+    <div class="crow">
+      <button class="cbtn" id="csave">&#128190; 保存设置</button>
+      <button class="cbtn" id="cclr">&#128465;&#65039; 清除</button>
+    </div>
+    <div class="cstatus idle" id="cstat">填写令牌和仓库后即可同步</div>
+    <div class="clink" id="clink"></div>
+  </div>
+</div>
+<button class="cfab" id="cfab" type="button">&#9729;&#65039;</button>
+
+
+<script>
+var CLOUD={API:'https://gitee.com/api/v5/repos/',FN:'daily6_backup.json',KEY:'daily6_cloud_v1',autoTimer:null,_fab:false};
+function ccfg(){try{return JSON.parse(localStorage.getItem(CLOUD.KEY)||'{}')}catch{return{}}}
+function cscfg(o){localStorage.setItem(CLOUD.KEY,JSON.stringify(o));}
+function csts(s,t){var el=document.getElementById('cstat');if(!el)return;el.textContent=s;el.className='cstatus '+(t||'idle');}
+function cnoop(){}
+function copen(){var d=ccfg();document.getElementById('ctok').value=d.tok||'';document.getElementById('crepo').value=d.repo||'';document.getElementById('cauto').checked=!!d.auto;csts(d.tok&&d.repo?'可上传或下载':'填写令牌和仓库后即可同步');document.getElementById('cmodal').classList.remove('hidden');}
+function cclose(){document.getElementById('cmodal').classList.add('hidden');}
+function cbuild(){return JSON.stringify({v:1,updated:new Date().toISOString(),data:state},null,0);}
+function cmerge(r){try{if(!r||!r.data)return;var o=r.data;if(o.records)state.records=o.records;if(o.reviews)state.reviews=o.reviews;save();render();}catch(e){console.warn('merge err',e);}}
+function cupl(){var d=ccfg();if(!d.tok||!d.repo){csts('请先填写令牌和仓库名',3);return;}document.getElementById('cupl').disabled=true;csts('上传中...');var body=btoa(unescape(encodeURIComponent(cbuild())));var api=CLOUD.API+d.repo+'/'+CLOUD.FN;var buildPayload=function(sha){var o={message:'daily6 backup '+new Date().toLocaleString('zh-CN'),content:body};if(sha)o.sha=sha;return JSON.stringify(o);};fetch(api+'?access_token='+d.tok).then(function(r){if(r.ok)return r.json();else if(r.status===404)return null;else throw 'GET '+r.status;}).then(function(ex){var sha=ex&&ex.sha?ex.sha:null;var method=sha?'PUT':'POST';return fetch(api+'?access_token='+d.tok,{method:method,headers:{'Content-Type':'application/json'},body:buildPayload(sha)});}).then(function(r){if(r.ok||r.status===201){csts('上传成功！',1);setTimeout(cclose,1200);}else{return r.text().then(function(t){throw 'code '+r.status+(t?' ('+t.slice(0,80)+')':'');});}}).catch(function(e){csts('上传失败: '+(e.message||e),3);document.getElementById('cupl').disabled=false;});}
+function cdn(){var d=ccfg();if(!d.tok||!d.repo){csts('请先填写令牌和仓库名',3);return;}document.getElementById('cdn').disabled=true;csts('下载中...');fetch(CLOUD.API+d.repo+'/'+CLOUD.FN+'?access_token='+d.tok+'&_='+Date.now(),{method:'GET'}).then(function(r){if(r.ok)return r.json();else if(r.status===404){csts('仓库暂无数据',2);document.getElementById('cdn').disabled=false;return null;}else throw 'code '+r.status;}).then(function(ex){if(!ex)return;try{var raw=decodeURIComponent(escape(atob(ex.content)));var obj=JSON.parse(raw);cmerge(obj);csts('下载成功，数据已合并！',1);}catch(e){csts('数据解析失败',3);}document.getElementById('cdn').disabled=false;}).catch(function(e){csts('下载失败: '+(e.message||e),3);document.getElementById('cdn').disabled=false;});}
+function csave(){var tok=document.getElementById('ctok').value.trim();var repo=document.getElementById('crepo').value.trim();if(!tok||!repo){csts('令牌和仓库名不能为空',3);return;}cscfg({tok:tok,repo:repo,auto:document.getElementById('cauto').checked});csts('设置已保存！',1);}
+function cclr(){if(!confirm('确定清除云同步配置？'))return;cscfg({});document.getElementById('ctok').value='';document.getElementById('crepo').value='';document.getElementById('cauto').checked=false;csts('已清除');}
+document.getElementById('cupl').onclick=cupl;
+// Robust FAB binding (fix mobile Safari no-response)
+function _bindFAB(){var b=document.getElementById('cfab');if(b&&!b._bound){b._bound=true;b.addEventListener('click',function(e){e.preventDefault();copen();});b.addEventListener('touchend',function(e){e.preventDefault();copen();});}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',_bindFAB);else _bindFAB();
+setTimeout(_bindFAB,500);setTimeout(_bindFAB,2000);
+
+document.getElementById('cdn').onclick=cdn;
+document.getElementById('csave').onclick=csave;
+document.getElementById('cclr').onclick=cclr;
+// auto-sync on save
+var _origS=save;
+save=function(){_origS.apply(this,arguments);var d=ccfg();if(d.auto&&d.tok&&d.repo&&!CLOUD._busy){CLOUD._busy=true;clearTimeout(CLOUD.autoTimer);CLOUD.autoTimer=setTimeout(function(){var btn=document.getElementById('cupl');if(btn&&!btn.disabled){CLOUD._fab=true;cupl();}CLOUD._busy=false;},2500);}};
+// auto-load on open
+window.addEventListener('load',function(){setTimeout(function(){var d=ccfg();if(d.tok&&d.repo){cdn();}},1500);});
+
+
+</script>
+</body>
