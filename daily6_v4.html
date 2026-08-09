@@ -330,12 +330,12 @@ load(); render();
   <div class="cbox" style="max-width:360px">
     <div class="cttl">&#9729;&#65039; 云同步设置</div>
     <div class="cfield">
-      <label class="clab">Gitee 私人令牌</label>
-      <input type="password" class="cinp" id="ctok" placeholder="粘贴 Gitee access_token">
+      <label class="clab">GitHub 私人令牌</label>
+      <input type="password" class="cinp" id="ctok" placeholder="粘贴 GitHub PAT (ghp_xxx)">
     </div>
     <div class="cfield">
-      <label class="clab">仓库（用户名/仓库名）</label>
-      <input type="text" class="cinp" id="crepo" placeholder="例如 yan-qun1111/yanqun-data">
+      <label class="clab">Gist ID</label>
+      <input type="text" class="cinp" id="crepo" placeholder="粘贴 Gist ID">
     </div>
     <label class="ctgl">
       <input type="checkbox" id="cauto"> 保存后自动同步
@@ -356,7 +356,7 @@ load(); render();
 
 
 <script>
-var CLOUD={API:'https://gitee.com/api/v5/repos/',FN:'daily6_backup.json',KEY:'daily6_cloud_v1',autoTimer:null,_fab:false};
+var CLOUD={API:'https://api.github.com/gists/',FN:'daily6_backup.json',KEY:'daily6_cloud_v1',autoTimer:null,_fab:false};
 function ccfg(){try{return JSON.parse(localStorage.getItem(CLOUD.KEY)||'{}')}catch{return{}}}
 function cscfg(o){localStorage.setItem(CLOUD.KEY,JSON.stringify(o));}
 function csts(s,t){var el=document.getElementById('cstat');if(!el)return;el.textContent=s;el.className='cstatus '+(t||'idle');}
@@ -365,8 +365,8 @@ function copen(){var d=ccfg();document.getElementById('ctok').value=d.tok||'';do
 function cclose(){document.getElementById('cmodal').classList.add('hidden');}
 function cbuild(){return JSON.stringify({v:1,updated:new Date().toISOString(),data:state},null,0);}
 function cmerge(r){try{if(!r||!r.data)return;var o=r.data;if(o.records)state.records=o.records;if(o.reviews)state.reviews=o.reviews;save();render();}catch(e){console.warn('merge err',e);}}
-function cupl(){var d=ccfg();if(!d.tok||!d.repo){csts('请先填写令牌和仓库名',3);return;}document.getElementById('cupl').disabled=true;csts('上传中...');var body=btoa(unescape(encodeURIComponent(cbuild())));var api=CLOUD.API+d.repo+'/'+CLOUD.FN;var buildPayload=function(sha){var o={message:'daily6 backup '+new Date().toLocaleString('zh-CN'),content:body};if(sha)o.sha=sha;return JSON.stringify(o);};fetch(api+'?access_token='+d.tok).then(function(r){if(r.ok)return r.json();else if(r.status===404)return null;else throw 'GET '+r.status;}).then(function(ex){var sha=ex&&ex.sha?ex.sha:null;var method=sha?'PUT':'POST';return fetch(api+'?access_token='+d.tok,{method:method,headers:{'Content-Type':'application/json'},body:buildPayload(sha)});}).then(function(r){if(r.ok||r.status===201){csts('上传成功！',1);setTimeout(cclose,1200);}else{return r.text().then(function(t){throw 'code '+r.status+(t?' ('+t.slice(0,80)+')':'');});}}).catch(function(e){csts('上传失败: '+(e.message||e),3);document.getElementById('cupl').disabled=false;});}
-function cdn(){var d=ccfg();if(!d.tok||!d.repo){csts('请先填写令牌和仓库名',3);return;}document.getElementById('cdn').disabled=true;csts('下载中...');fetch(CLOUD.API+d.repo+'/'+CLOUD.FN+'?access_token='+d.tok+'&_='+Date.now(),{method:'GET'}).then(function(r){if(r.ok)return r.json();else if(r.status===404){csts('仓库暂无数据',2);document.getElementById('cdn').disabled=false;return null;}else throw 'code '+r.status;}).then(function(ex){if(!ex)return;try{var raw=decodeURIComponent(escape(atob(ex.content)));var obj=JSON.parse(raw);cmerge(obj);csts('下载成功，数据已合并！',1);}catch(e){csts('数据解析失败',3);}document.getElementById('cdn').disabled=false;}).catch(function(e){csts('下载失败: '+(e.message||e),3);document.getElementById('cdn').disabled=false;});}
+function cupl(){var d=ccfg();if(!d.tok||!d.repo){csts('请先填写令牌和Gist ID',3);return;}document.getElementById('cupl').disabled=true;csts('上传中...');var body=cbuild();var payload=JSON.stringify({description:'daily6 backup',public:false,files:(function(){var o={};o[CLOUD.FN]={content:body};return o;})()});fetch(CLOUD.API+d.repo,{method:'PATCH',headers:{'Authorization':'token '+d.tok,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:payload}).then(function(r){if(r.ok||r.status===201){csts('上传成功！',1);setTimeout(cclose,1200);}else{return r.text().then(function(t){throw 'code '+r.status+(t?' ('+t.slice(0,80)+')':'');});}}).catch(function(e){csts('上传失败: '+(e.message||e),3);document.getElementById('cupl').disabled=false;});}
+function cdn(){var d=ccfg();if(!d.tok||!d.repo){csts('请先填写令牌和Gist ID',3);return;}document.getElementById('cdn').disabled=true;csts('下载中...');fetch(CLOUD.API+d.repo,{method:'GET',headers:{'Authorization':'token '+d.tok,'Accept':'application/vnd.github+json'}}).then(function(r){if(r.ok)return r.json();else throw 'code '+r.status;}).then(function(ex){var file=ex.files&&ex.files[CLOUD.FN];if(!file||!file.content){csts('Gist中暂无数据',2);document.getElementById('cdn').disabled=false;return;}try{var obj=JSON.parse(file.content);cmerge(obj);csts('下载成功，数据已合并！',1);}catch(e){csts('数据解析失败',3);}document.getElementById('cdn').disabled=false;}).catch(function(e){csts('下载失败: '+(e.message||e),3);document.getElementById('cdn').disabled=false;});}
 function csave(){var tok=document.getElementById('ctok').value.trim();var repo=document.getElementById('crepo').value.trim();if(!tok||!repo){csts('令牌和仓库名不能为空',3);return;}cscfg({tok:tok,repo:repo,auto:document.getElementById('cauto').checked});csts('设置已保存！',1);}
 function cclr(){if(!confirm('确定清除云同步配置？'))return;cscfg({});document.getElementById('ctok').value='';document.getElementById('crepo').value='';document.getElementById('cauto').checked=false;csts('已清除');}
 document.getElementById('cupl').onclick=cupl;
