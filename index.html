@@ -352,7 +352,7 @@ load(); render();
     <div class="clink" id="clink"></div>
   </div>
 </div>
-<button class="cfab" id="cfab" onclick="copen()">&#9729;&#65039;</button>
+<button class="cfab" id="cfab" type="button">&#9729;&#65039;</button>
 
 
 var CLOUD={API:'https://gitee.com/api/v5/repos/',FN:'daily6_backup.json',KEY:'daily6_cloud_v1',autoTimer:null,_fab:false};
@@ -369,6 +369,11 @@ function cdn(){var d=ccfg();if(!d.tok||!d.repo){csts('请先填写令牌和仓�
 function csave(){var tok=document.getElementById('ctok').value.trim();var repo=document.getElementById('crepo').value.trim();if(!tok||!repo){csts('令牌和仓库名不能为空',3);return;}cscfg({tok:tok,repo:repo,auto:document.getElementById('cauto').checked});csts('设置已保存！',1);}
 function cclr(){if(!confirm('确定清除云同步配置？'))return;cscfg({});document.getElementById('ctok').value='';document.getElementById('crepo').value='';document.getElementById('cauto').checked=false;csts('已清除');}
 document.getElementById('cupl').onclick=cupl;
+// Robust FAB binding (fix mobile Safari no-response)
+function _bindFAB(){var b=document.getElementById('cfab');if(b&&!b._bound){b._bound=true;b.addEventListener('click',function(e){e.preventDefault();copen();});b.addEventListener('touchend',function(e){e.preventDefault();copen();});}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',_bindFAB);else _bindFAB();
+setTimeout(_bindFAB,500);setTimeout(_bindFAB,2000);
+
 document.getElementById('cdn').onclick=cdn;
 document.getElementById('csave').onclick=csave;
 document.getElementById('cclr').onclick=cclr;
